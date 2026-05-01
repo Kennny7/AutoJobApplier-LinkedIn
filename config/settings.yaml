@@ -1,3 +1,4 @@
+# Auto_Job_Applier/config/settings.yaml
 search:
   keywords: ["Python Developer", "Backend Engineer"]
   location: "United States"

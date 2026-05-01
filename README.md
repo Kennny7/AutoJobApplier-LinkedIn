@@ -52,27 +52,27 @@ This tool streamlines job applications by automatically filling forms, answering
 
 
 
-- [A] Automated **LinkedIn Easy Apply**
+- Automated **LinkedIn Easy Apply**
 
-- [B] Smart **question answering system**
+- Smart **question answering system**
 
-- [C] Pluggable **matcher pipeline** (Keyword, Regex, Fuzzy, Faker)
+- Pluggable **matcher pipeline** (Keyword, Regex, Fuzzy, Faker)
 
-- [D] Pause on unknown questions (interactive CLI)
+- Pause on unknown questions (interactive CLI)
 
-- [E] Resume auto-upload
+- Resume auto-upload
 
-- [F] CSV tracking (`applied_jobs.csv`, `failed_jobs.csv`)
+- CSV tracking (`applied_jobs.csv`, `failed_jobs.csv`)
 
-- [G] Stealth & headless browser support
+- Stealth & headless browser support
 
-- [H] YAML-based configuration
+- YAML-based configuration
 
-- [I] Extensible architecture for custom logic
+- Extensible architecture for custom logic
 
-- [J] Rich CLI wizard (first-run setup)
+- Rich CLI wizard (first-run setup)
 
-- [K] Pagination + blacklist filtering
+- Pagination + blacklist filtering
 
 
 
