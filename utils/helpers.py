@@ -90,6 +90,9 @@ def random_buffer(base: float = 1.0, spread: float = 0.5) -> None:
     """Sleep for a random duration around base."""
     time.sleep(random.uniform(base - spread if base - spread > 0 else 0, base + spread))
 
+def buffer(seconds: float = 1.0) -> None:
+    """Sleep for the given number of seconds (used for consistent short pauses)."""
+    time.sleep(seconds)
 
 def safe_screenshot(driver: WebDriver, filename_prefix: str) -> str:
     """Take a screenshot and save to logs/screenshots directory."""

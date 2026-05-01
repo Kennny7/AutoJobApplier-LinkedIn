@@ -27,7 +27,6 @@ def is_logged_in(driver: WebDriver) -> bool:
     current_url = driver.current_url
     if "linkedin.com/feed" in current_url:
         return True
-    # If "Sign in" or "Join now" elements exist, we are not logged in
     try:
         driver.find_element(By.LINK_TEXT, "Sign in")
         return False
@@ -41,10 +40,19 @@ def is_logged_in(driver: WebDriver) -> bool:
     logger.debug("No login elements found, assuming logged in.")
     return True
 
+def _wait_for_login(driver: WebDriver, timeout: int) -> bool:
+    """Poll is_logged_in every 2 seconds until timeout. Returns True if logged in."""
+    start = time.time()
+    while time.time() - start < timeout:
+        if is_logged_in(driver):
+            return True
+        time.sleep(2)
+    return False
+
 def login(driver: WebDriver, actions: ActionChains, wait: WebDriverWait,
           username: str, password: str) -> None:
     """
-    Login to LinkedIn. If automatic fails, prompts manual login.
+    Login to LinkedIn with automatic retry and manual fallback.
     
     Args:
         driver: Selenium WebDriver.
@@ -58,21 +66,20 @@ def login(driver: WebDriver, actions: ActionChains, wait: WebDriverWait,
     """
     driver.get("https://www.linkedin.com/login")
     
-    # If already logged in, return
+    # If already logged in, return immediately
     if is_logged_in(driver):
         logger.info("Already logged in LinkedIn.")
         return
 
-    # If credentials not configured, ask manual
+    # If credentials not configured, go straight to manual login
     if not username or not password:
         logger.warning("No LinkedIn credentials provided. Manual login required.")
-        # Simple manual wait using pyautogui (or rich prompt)
         import pyautogui
         pyautogui.alert(
             "Please log in to LinkedIn manually in the opened browser, then close this dialog.",
             "Manual Login", "Continue"
         )
-        wait.until(lambda d: is_logged_in(d))
+        _wait_for_login(driver, timeout=120)
         return
 
     # Fill credentials
@@ -93,17 +100,25 @@ def login(driver: WebDriver, actions: ActionChains, wait: WebDriverWait,
     # Click submit
     driver.find_element(By.XPATH, '//button[@type="submit"]').click()
     
-    # Wait for redirection to feed
-    try:
-        wait.until(EC.url_contains("linkedin.com/feed"))
+    # Wait patiently for login (possibly with 2FA)
+    if _wait_for_login(driver, timeout=60):
         logger.info("Login successful.")
-    except TimeoutException:
-        # Could be a verification step
-        logger.error("Login may have failed or a challenge appeared.")
-        import pyautogui
-        pyautogui.alert("Please complete any security verification, then close this dialog.", "Verification", "Continue")
-        if not is_logged_in(driver):
-            raise LoginFailed("Login failed despite manual intervention.")
+        return
+
+    # If we get here, 2FA or another verification is likely needed
+    logger.warning("Automatic login timed out – probably 2FA / verification step.")
+    import pyautogui
+    pyautogui.alert(
+        "Please complete any security verification in the browser, then close this dialog.",
+        "Verification", "Continue"
+    )
+    
+    # Give the user extra time after dismissing the alert
+    if _wait_for_login(driver, timeout=120):
+        logger.info("Login completed after manual verification.")
+        return
+
+    raise LoginFailed("Login failed even after manual intervention.")
 
 def apply_search_filters(driver: WebDriver, actions: ActionChains, wait: WebDriverWait,
                          search_location: str, filters: dict) -> None:
@@ -122,6 +137,10 @@ def apply_search_filters(driver: WebDriver, actions: ActionChains, wait: WebDriv
             loc_input = wait.until(EC.presence_of_element_located(
                 (By.XPATH, "//input[@aria-label='City, state, or zip code']")
             ))
+            # Select all existing text (e.g., default "India") to avoid concatenation
+            actions.move_to_element(loc_input).click().perform()
+            time.sleep(0.5)
+            actions.key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).perform()
             loc_input.clear()
             loc_input.send_keys(search_location)
             time.sleep(2)

@@ -22,7 +22,7 @@ from core.browser import create_chrome_session
 from core.state import state
 
 # --- New imports for application loop ---
-from core.actions import click_element, random_buffer
+from utils.helpers import click_element, random_buffer
 from question_handling.matchers import KeywordMatcher, RegexMatcher, FuzzyMatcher, FakerFallbackMatcher
 from question_handling.handlers import SELECT_HANDLER, RADIO_HANDLER, TEXT_HANDLER, TEXTAREA_HANDLER
 from question_handling.router import QuestionRouter
@@ -31,6 +31,7 @@ from core.linkedin import login, apply_search_filters
 from core.job_scraper import get_page_jobs, get_job_main_details, go_to_next_page, get_job_description
 from core.easy_apply import EasyApplyProcess
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import StaleElementReferenceException  # added for robustness
 
 # Initialise logger early
 logger = get_logger("AutoApply")
@@ -189,9 +190,13 @@ def main():
         location = settings.get("search", {}).get("location", "")
         filters = settings.get("search", {}).get("filters", {})
 
+        # Debug: show the actual values being used (helps with config issues like "country")
+        logger.debug(f"Search terms: {search_terms}, location: '{location}', filters: {filters}")
+
         # Initialize easy apply helper
         apply_process = EasyApplyProcess(driver, actions, wait, router,
-                                         state.resume_path, applied_writer, failed_writer)
+                                         state.resume_path, applied_writer, failed_writer,
+                                         user_data=user_data)
 
         total_runs = 0
         for term in search_terms:
@@ -208,42 +213,53 @@ def main():
                     break
 
                 for job in jobs:
-                    job_id, title, company, loc, style, skip = get_job_main_details(
-                        job, driver, actions, state.applied_job_ids, set()
-                    )
-                    if skip:
-                        logger.info(f"Skipping {title} at {company}: {skip}")
-                        continue
-
-                    # Click job to expand details
+                    # Wrap the entire per‑job processing to survive transient DOM issues
                     try:
-                        job_link_btn = job.find_element(By.TAG_NAME, "a")
-                        click_element(actions, job_link_btn)
-                        random_buffer(1)
-                    except:
+                        job_id, title, company, loc, style, skip = get_job_main_details(
+                            job, driver, actions, state.applied_job_ids, set()
+                        )
+                        if skip:
+                            logger.info(f"Skipping {title} at {company}: {skip}")
+                            continue
+
+                        # Click job to expand details
+                        try:
+                            job_link_btn = job.find_element(By.TAG_NAME, "a")
+                            click_element(actions, job_link_btn)
+                            random_buffer(1)
+                        except:
+                            continue
+
+                        # Get description
+                        desc, years, skip_desc = get_job_description(driver, wait)
+                        if skip_desc:
+                            logger.info(f"Skip due to description: {skip_desc}")
+                            continue
+
+                        # Attempt Easy Apply
+                        apply_process.apply_to_job(
+                            job_id, title, company, loc, style,
+                            f"https://www.linkedin.com/jobs/view/{job_id}",
+                            desc
+                        )
+
+                        # Check limits
+                        if state.easy_applied_count >= state.settings.get("max_applications", 100):
+                            logger.info("Session application limit reached.")
+                            driver.quit()
+                            return
+
+                        if state.daily_limit_reached:
+                            break
+
+                    except StaleElementReferenceException as e:
+                        # This job card became invalid while we processed it – skip it gracefully
+                        logger.warning(f"Stale element for a job – skipping: {e}")
                         continue
-
-                    # Get description
-                    desc, years, skip_desc = get_job_description(driver, wait)
-                    if skip_desc:
-                        logger.info(f"Skip due to description: {skip_desc}")
+                    except Exception as e:
+                        # Unexpected error processing a single job – log and move on
+                        logger.error(f"Error processing a job: {e}", exc_info=True)
                         continue
-
-                    # Attempt Easy Apply
-                    apply_process.apply_to_job(
-                        job_id, title, company, loc, style,
-                        f"https://www.linkedin.com/jobs/view/{job_id}",
-                        desc
-                    )
-
-                    # Check limits
-                    if state.easy_applied_count >= state.settings.get("max_applications", 100):
-                        logger.info("Session application limit reached.")
-                        driver.quit()
-                        return
-
-                    if state.daily_limit_reached:
-                        break
 
                 # Next page
                 if not go_to_next_page(driver, page):
