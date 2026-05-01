@@ -1,0 +1,9 @@
+selenium>=4.15
+webdriver-manager>=4.0
+undetected-chromedriver>=3.5
+rich>=13.0
+pyyaml>=6.0
+questionary>=2.0
+faker>=22.0
+thefuzz>=0.22
+pyautogui>=0.9

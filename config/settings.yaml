@@ -1,0 +1,41 @@
+search:
+  keywords: ["Python Developer", "Backend Engineer"]
+  location: "United States"
+  date_posted: "Past week"      # Any time, Past month, Past week, Past 24 hours
+  sort_by: "Most recent"       # Most relevant
+  easy_apply_only: true
+  filters:
+    experience: []             # e.g. ["Mid-Senior level"]
+    job_type: []
+    remote: []
+    companies: []              # company names
+    industries: []
+    under_10_applicants: false
+    in_network: false
+    fair_chance: false
+
+behaviour:
+  pause_on_unknown_question: true
+  unknown_question_action: "pause"    # pause, skip_job, fill_placeholder, fill_random
+  overwrite_previous_answers: false
+  follow_company: false
+  close_tabs: true
+  run_headless: false
+  stealth_mode: true
+  cycle_search: false          # alternate sort/date filters
+  max_applications_per_session: 100
+  resume_upload_once: true     # upload only once per session
+
+paths:
+  applied_csv: "data/applied_jobs.csv"
+  failed_csv: "data/failed_jobs.csv"
+  log_dir: "data/logs"
+  screenshots_dir: "data/logs/screenshots"
+  resume_path: "resume/my_resume.pdf"
+
+blacklist:
+  bad_words_in_description: ["polygraph", "clearance", "top secret"]
+  bad_words_in_company: []
+  good_words_in_company: []
+  security_clearance_required: false
+  years_experience_required: 10  # 0 = ignore

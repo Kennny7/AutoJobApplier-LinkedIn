@@ -1,0 +1,20 @@
+[project]
+name = "auto-job-applier"
+version = "26.01.20.5.08"
+description = "Automated LinkedIn Easy Apply with intelligent Q&A"
+requires-python = ">=3.11"
+dependencies = [
+    "selenium>=4.15",
+    "webdriver-manager>=4.0",
+    "undetected-chromedriver>=3.5",
+    "rich>=13.0",
+    "pyyaml>=6.0",
+    "questionary>=2.0",
+    "faker>=22.0",
+    "thefuzz>=0.22",
+    "pyautogui>=0.9",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends._legacy:_Backend"

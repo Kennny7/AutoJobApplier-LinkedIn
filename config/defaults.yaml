@@ -1,0 +1,32 @@
+personal:
+  first_name: "%FIRST_NAME%"
+  middle_name: "%MIDDLE_NAME%"
+  last_name: "%LAST_NAME%"
+  full_name: "%FULL_NAME%"
+  phone: "%PHONE%"
+  city: "%CITY%"
+  state: "%STATE%"
+  zip: "%ZIP%"
+  country: "%COUNTRY%"
+  linkedin: "%LINKEDIN%"
+  website: "%WEBSITE%"
+  headline: "%HEADLINE%"
+  summary: "%SUMMARY%"
+  cover_letter: "%COVER_LETTER%"
+
+experience:
+  total_years: "%YEARS_EXPERIENCE%"
+  recent_employer: "%RECENT_EMPLOYER%"
+  confidence_level: "%CONFIDENCE_LEVEL%"
+
+eligibility:
+  sponsorship: "No"
+  veteran_status: "I am not a protected veteran"
+  disability_status: "I do not wish to answer"
+  us_citizenship: "U.S. Citizen/Permanent Resident"
+  work_authorization: "Yes"
+
+salary:
+  desired: "%DESIRED_SALARY%"
+  current: "%CURRENT_CTC%"
+  notice_period: "%NOTICE_PERIOD%"
