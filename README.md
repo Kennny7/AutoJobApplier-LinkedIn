@@ -1,18 +1,12 @@
-# [+] AutoJobApplier-LinkedIn
+<h1 align="center">AutoJobApplier-LinkedIn</h1>
 
-
-
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-
-![License](https://img.shields.io/badge/License-MIT-green)
-
-![Status](https://img.shields.io/badge/Status-Active-success)
-
-![Automation](https://img.shields.io/badge/Automation-Selenium-orange)
-
-![CLI](https://img.shields.io/badge/CLI-Rich%20%2B%20Questionary-purple)
-
-
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10%2B-blue" />
+  <img src="https://img.shields.io/badge/License-MIT-green" />
+  <img src="https://img.shields.io/badge/Status-Active-success" />
+  <img src="https://img.shields.io/badge/Automation-Selenium-orange" />
+  <img src="https://img.shields.io/badge/CLI-Rich%20%2B%20Questionary-purple" />
+</p>
 
 Automate your LinkedIn **Easy Apply** workflow with intelligence, control, and extensibility.  
 
