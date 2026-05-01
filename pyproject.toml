@@ -16,5 +16,11 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.backends._legacy:_Backend"
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["core", "config", "question_handling", "utils"]
+
+[project.scripts]
+auto-job-applier = "main:main"

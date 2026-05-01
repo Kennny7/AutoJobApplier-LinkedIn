@@ -1,7 +1,7 @@
 # Auto_Job_Applier/config/settings.yaml
 search:
   keywords: ["Python Developer", "Backend Engineer"]
-  location: "United States"
+  location: "Country"
   date_posted: "Past week"      # Any time, Past month, Past week, Past 24 hours
   sort_by: "Most recent"       # Most relevant
   easy_apply_only: true
