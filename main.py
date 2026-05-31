@@ -18,6 +18,14 @@ from rich import print as rprint
 
 from config.loader import load_config, save_user_data
 from utils.logger import get_logger
+from utils.validators import (
+    clean_salary,
+    clean_notice_period,
+    clean_experience,
+    clean_confidence,
+    safe_int,
+    extract_number
+)
 from core.browser import create_chrome_session
 from core.state import state
 
@@ -69,25 +77,81 @@ def run_wizard(config: Dict[str, Any]) -> Dict[str, Any]:
     user["headline"] = questionary.text("LinkedIn Headline:", default=user.get("headline", "")).ask()
     user["summary"] = questionary.text("LinkedIn Summary:", default=user.get("summary", "")).ask()
     user["cover_letter"] = questionary.text("Default Cover Letter:", default=user.get("cover_letter", "")).ask()
-    user["years_experience"] = questionary.text("Total Years of Experience:", default=user.get("years_experience", "5")).ask()
+
+    # user["years_experience"] = questionary.text("Total Years of Experience:", default=user.get("years_experience", "5")).ask()
+    # user["recent_employer"] = questionary.text("Most Recent Employer:", default=user.get("recent_employer", "")).ask()
+    # user["desired_salary"] = questionary.text("Desired Salary (annual, numeric):", default=user.get("desired_salary", "100000")).ask()
+    # user["current_ctc"] = questionary.text("Current CTC (annual, numeric):", default=user.get("current_ctc", "80000")).ask()
+    # user["notice_period"] = questionary.text("Notice Period (days):", default=user.get("notice_period", "30")).ask()
+    # user["confidence_level"] = questionary.text("Confidence level (1-10):", default=user.get("confidence_level", "8")).ask()
+
+    # # 3. Behaviour
+    # state.settings = settings
+    # state.pause_on_unknown = questionary.confirm("Pause on unknown questions?").ask()
+    # unknown_actions = ["pause", "skip_job", "fill_placeholder", "fill_random"]
+    # state.unknown_action = questionary.select(
+    #     "If unknown question and not pausing:",
+    #     choices=unknown_actions
+    # ).ask()
+    # headless = questionary.confirm("Run browser headless?").ask()
+    # stealth = questionary.confirm("Use stealth mode (undetected chromedriver)?").ask()
+    # cycle = questionary.confirm("Cycle through sort/date filters after each run?").ask()
+    # max_apps = questionary.text("Max applications per session:", default="100").ask()
+
+
+    # ---- Numeric / formatted fields (validated) ----
+    # years_experience
+    raw_exp = questionary.text(
+        "Total Years of Experience (e.g., 5, 2+):",
+        default=user.get("years_experience", "5"),
+        validate=lambda text: bool(extract_number(text)) or "Please enter a number (like 3, 5+, 2-4)"
+    ).ask()
+    user["years_experience"] = clean_experience(raw_exp, default=5)
+
     user["recent_employer"] = questionary.text("Most Recent Employer:", default=user.get("recent_employer", "")).ask()
-    user["desired_salary"] = questionary.text("Desired Salary (annual, numeric):", default=user.get("desired_salary", "100000")).ask()
-    user["current_ctc"] = questionary.text("Current CTC (annual, numeric):", default=user.get("current_ctc", "80000")).ask()
-    user["notice_period"] = questionary.text("Notice Period (days):", default=user.get("notice_period", "30")).ask()
-    user["confidence_level"] = questionary.text("Confidence level (1-10):", default=user.get("confidence_level", "8")).ask()
+
+    # desired_salary
+    raw_desired = questionary.text(
+        "Desired Salary (e.g., 10 LPA, 1000000, 1.2 Cr):",
+        default=user.get("desired_salary", "100000"),
+        validate=lambda text: bool(extract_number(text)) or "Enter a number with unit (LPA, Cr, etc.)"
+    ).ask()
+    user["desired_salary"] = clean_salary(raw_desired, default=100000)
+
+    # current_ctc
+    raw_ctc = questionary.text(
+        "Current CTC (same format as desired salary):",
+        default=user.get("current_ctc", "80000"),
+        validate=lambda text: bool(extract_number(text)) or "Enter a number with unit"
+    ).ask()
+    user["current_ctc"] = clean_salary(raw_ctc, default=80000)
+
+    # notice_period
+    raw_notice = questionary.text(
+        "Notice Period (e.g., 30 days, 2 months, immediate):",
+        default=user.get("notice_period", "30"),
+        validate=lambda text: bool(extract_number(text)) or "immediate" in text.lower() or "Enter a number or 'immediate'"
+    ).ask()
+    user["notice_period"] = clean_notice_period(raw_notice, default=30)
+
+    # confidence_level
+    raw_conf = questionary.text(
+        "Confidence level (1-10):",
+        default=user.get("confidence_level", "8"),
+        validate=lambda text: bool(extract_number(text)) and 1 <= extract_number(text) <= 10 or "Enter a number 1-10"
+    ).ask()
+    user["confidence_level"] = clean_confidence(raw_conf, default=8)
 
     # 3. Behaviour
-    state.settings = settings
-    state.pause_on_unknown = questionary.confirm("Pause on unknown questions?").ask()
-    unknown_actions = ["pause", "skip_job", "fill_placeholder", "fill_random"]
-    state.unknown_action = questionary.select(
-        "If unknown question and not pausing:",
-        choices=unknown_actions
+    # ... (rest unchanged)
+    max_apps = questionary.text(
+        "Max applications per session:",
+        default=str(user.get("max_applications", 100)),
+        validate=lambda text: bool(extract_number(text)) or "Enter a number"
     ).ask()
-    headless = questionary.confirm("Run browser headless?").ask()
-    stealth = questionary.confirm("Use stealth mode (undetected chromedriver)?").ask()
-    cycle = questionary.confirm("Cycle through sort/date filters after each run?").ask()
-    max_apps = questionary.text("Max applications per session:", default="100").ask()
+    max_apps_int = safe_int(max_apps, 100, "max_applications")
+    user_data["max_applications"] = max_apps_int
+    # ... (rest unchanged)
 
     # Save all into user_data
     user_data = {**user}
