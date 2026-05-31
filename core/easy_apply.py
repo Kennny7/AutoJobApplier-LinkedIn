@@ -1,3 +1,4 @@
+# Auto_Job_Applier\core\easy_apply.py
 """
 Easy Apply modal handler.
 Inputs: WebDriver, ActionChains, WebDriverWait, resume path, question router, state.
@@ -21,7 +22,21 @@ from selenium.common.exceptions import (
     ElementClickInterceptedException,
 )
 
-from utils.helpers import random_buffer, click_element, scroll_into_view, buffer
+from utils.helpers import (
+    random_buffer, 
+    click_element, 
+    scroll_into_view, 
+    buffer
+)
+
+from utils.validators import (
+    clean_salary,
+    clean_notice_period,
+    clean_experience,
+    safe_int,
+    extract_number
+)
+
 from question_handling.router import QuestionRouter
 from core.state import state
 from utils.csv_writer import CSVWriter
@@ -40,6 +55,30 @@ class EasyApplyProcess:
         self.resume_path = resume_path
         self.applied_writer = applied_writer
         self.failed_writer = failed_writer
+
+        # self.user_data = user_data or {}
+        # # Pre‑compute frequently used strings
+        # self.full_name = " ".join(filter(None, [
+        #     self.user_data.get("first_name", ""),
+        #     self.user_data.get("middle_name", ""),
+        #     self.user_data.get("last_name", "")
+        # ])).strip()
+        # self.years_experience = str(self.user_data.get("years_experience", "5"))
+        # self.phone_number = self.user_data.get("phone", "")
+        # # salary variants
+        # desired_salary = int(self.user_data.get("desired_salary", 100000))
+        # current_ctc = int(self.user_data.get("current_ctc", 80000))
+        # self.desired_salary_str = str(desired_salary)
+        # self.desired_salary_lakhs = str(round(desired_salary / 100000, 2))
+        # self.desired_salary_monthly = str(round(desired_salary/12, 2))
+        # self.current_ctc_str = str(current_ctc)
+        # self.current_ctc_lakhs = str(round(current_ctc / 100000, 2))
+        # self.current_ctc_monthly = str(round(current_ctc/12, 2))
+        # notice_days = int(self.user_data.get("notice_period", 30))
+        # self.notice_period_str = str(notice_days)
+        # self.notice_period_months = str(notice_days//30)
+        # self.notice_period_weeks = str(notice_days//7)
+
         self.user_data = user_data or {}
         # Pre‑compute frequently used strings
         self.full_name = " ".join(filter(None, [
@@ -47,21 +86,30 @@ class EasyApplyProcess:
             self.user_data.get("middle_name", ""),
             self.user_data.get("last_name", "")
         ])).strip()
-        self.years_experience = str(self.user_data.get("years_experience", "5"))
+
+        # Years of experience – use clean_experience to get integer, store string version for forms
+        exp_int = clean_experience(self.user_data.get("years_experience"), default=0)
+        self.years_experience = str(exp_int) if exp_int > 0 else "5"
+
         self.phone_number = self.user_data.get("phone", "")
-        # salary variants
-        desired_salary = int(self.user_data.get("desired_salary", 100000))
-        current_ctc = int(self.user_data.get("current_ctc", 80000))
+
+        # Salary variants – safe integer conversion with domain‑specific cleaning
+        desired_salary = clean_salary(self.user_data.get("desired_salary"), default=120000)
+        current_ctc = clean_salary(self.user_data.get("current_ctc"), default=80000)
+
         self.desired_salary_str = str(desired_salary)
-        self.desired_salary_lakhs = str(round(desired_salary / 100000, 2))
-        self.desired_salary_monthly = str(round(desired_salary/12, 2))
+        self.desired_salary_lakhs = str(round(desired_salary / 120000, 2))
+        self.desired_salary_monthly = str(round(desired_salary / 12, 2))
+
         self.current_ctc_str = str(current_ctc)
-        self.current_ctc_lakhs = str(round(current_ctc / 100000, 2))
-        self.current_ctc_monthly = str(round(current_ctc/12, 2))
-        notice_days = int(self.user_data.get("notice_period", 30))
+        self.current_ctc_lakhs = str(round(current_ctc / 120000, 2))
+        self.current_ctc_monthly = str(round(current_ctc / 12, 2))
+
+        # Notice period – clean as days integer, then derive other formats
+        notice_days = clean_notice_period(self.user_data.get("notice_period"), default=30)
         self.notice_period_str = str(notice_days)
-        self.notice_period_months = str(notice_days//30)
-        self.notice_period_weeks = str(notice_days//7)
+        self.notice_period_months = str(notice_days // 30)
+        self.notice_period_weeks = str(notice_days // 7)
 
     def apply_to_job(self, job_id: str, title: str, company: str, location: str,
                      work_style: str, job_link: str, description: str) -> None:
