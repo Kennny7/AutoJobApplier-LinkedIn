@@ -56,29 +56,6 @@ class EasyApplyProcess:
         self.applied_writer = applied_writer
         self.failed_writer = failed_writer
 
-        # self.user_data = user_data or {}
-        # # Pre‑compute frequently used strings
-        # self.full_name = " ".join(filter(None, [
-        #     self.user_data.get("first_name", ""),
-        #     self.user_data.get("middle_name", ""),
-        #     self.user_data.get("last_name", "")
-        # ])).strip()
-        # self.years_experience = str(self.user_data.get("years_experience", "5"))
-        # self.phone_number = self.user_data.get("phone", "")
-        # # salary variants
-        # desired_salary = int(self.user_data.get("desired_salary", 100000))
-        # current_ctc = int(self.user_data.get("current_ctc", 80000))
-        # self.desired_salary_str = str(desired_salary)
-        # self.desired_salary_lakhs = str(round(desired_salary / 100000, 2))
-        # self.desired_salary_monthly = str(round(desired_salary/12, 2))
-        # self.current_ctc_str = str(current_ctc)
-        # self.current_ctc_lakhs = str(round(current_ctc / 100000, 2))
-        # self.current_ctc_monthly = str(round(current_ctc/12, 2))
-        # notice_days = int(self.user_data.get("notice_period", 30))
-        # self.notice_period_str = str(notice_days)
-        # self.notice_period_months = str(notice_days//30)
-        # self.notice_period_weeks = str(notice_days//7)
-
         self.user_data = user_data or {}
         # Pre‑compute frequently used strings
         self.full_name = " ".join(filter(None, [
@@ -221,12 +198,131 @@ class EasyApplyProcess:
         except NoSuchElementException:
             logger.debug("No file upload element found; resume likely already present.")
 
+
     def _discard_modal(self) -> None:
-        """Close the modal by pressing Escape or clicking discard."""
+        """
+        Robustly close Easy Apply and confirm discard.
+        Handles:
+        - X / Dismiss button
+        - ESC key
+        - Discard confirmation popup
+        - lingering modal cleanup
+        """
+
         try:
-            self.actions.send_keys(Keys.ESCAPE).perform()
-        except:
-            pass
+
+            # Try clicking close/dismiss first
+            close_selectors = [
+
+                '//button[contains(@aria-label,"Dismiss")]',
+                '//button[contains(@aria-label,"Close")]',
+                '//button[contains(@aria-label,"dismiss")]'
+
+            ]
+
+            for selector in close_selectors:
+
+                try:
+
+                    btn = self.driver.find_element(
+                        By.XPATH,
+                        selector
+                    )
+
+                    click_element(
+                        self.actions,
+                        btn
+                    )
+
+                    random_buffer(.5)
+
+                    logger.debug(
+                        "Clicked modal close button"
+                    )
+
+                    break
+
+                except:
+                    continue
+
+
+            # Fallback: ESC key
+            try:
+
+                self.actions.send_keys(
+                    Keys.ESCAPE
+                ).perform()
+
+                random_buffer(.5)
+
+            except:
+                pass
+
+
+            # Handle discard confirmation popup
+            discard_selectors = [
+
+                '//button[contains(.,"Discard")]',
+                '//button[contains(.,"discard")]',
+                '//button[@data-control-name="discard_application_confirm_btn"]'
+
+            ]
+
+            for selector in discard_selectors:
+
+                try:
+
+                    btn = self.driver.find_element(
+                        By.XPATH,
+                        selector
+                    )
+
+                    click_element(
+                        self.actions,
+                        btn
+                    )
+
+                    logger.debug(
+                        "Discarded application modal"
+                    )
+
+                    random_buffer(.5)
+
+                    break
+
+                except:
+                    continue
+
+
+            # Verify modal disappeared
+            try:
+
+                remaining = self.driver.find_elements(
+                    By.XPATH,
+                    '//div[contains(@data-test-modal-id,"easy-apply")]'
+                )
+
+                if remaining:
+
+                    logger.warning(
+                        f"{len(remaining)} Easy Apply modal(s) still open"
+                    )
+
+                else:
+
+                    logger.debug(
+                        "Easy Apply modal successfully closed"
+                    )
+
+            except:
+                pass
+
+
+        except Exception as e:
+
+            logger.warning(
+                f"Could not close modal: {e}"
+            )
 
     # ------------------------------------------------------------------
     # New / improved methods for robust multi‑page handling
@@ -251,7 +347,7 @@ class EasyApplyProcess:
                 continue
             text_input = self._safe_find(q_el, ".//input[@type='text']")
             if text_input:
-                self._answer_text(text_input, answered_set, q_el, work_location)
+                self._answer_text(text_input, answered_set, q_el, work_location, job_description)
                 continue
             textarea = self._safe_find(q_el, ".//textarea")
             if textarea:
@@ -391,17 +487,42 @@ class EasyApplyProcess:
             pass
         answered_set.add((label, answer_text, "radio", selected_label if selected_label else "None"))
 
-    def _resolve_radio_answer(self, label):
-        if "citizenship" in label or "employment eligibility" in label:
+    # def _resolve_radio_answer(self, label):
+    #     if "citizenship" in label or "employment eligibility" in label:
+    #         return self.user_data.get("us_citizenship", "Decline")
+            
+    #         # Default to US citizenship logic
+    #         return self.user_data.get("us_citizenship", "Decline")
+    #     if "veteran" in label or "protected" in label:
+    #         return self.user_data.get("veteran_status", "Decline")
+    #     if "disability" in label:
+    #         return self.user_data.get("disability_status", "Decline")
+    #     # default "Yes"
+    #     return "Yes"
+
+    def _resolve_radio_answer(self, label, options=None):
+        label_lower = label.lower()
+        
+        # Handle citizenship and eligibility questions
+        if "citizenship" in label_lower or "employment eligibility" in label_lower:
+            # Check if the specific question or the first option targets Indian citizenship
+            if "indian" in label_lower or (options and "indian" in options[0].lower()):
+                return self.user_data.get("indian_citizenship", "Yes")
+            
+            # Default to US citizenship logic
             return self.user_data.get("us_citizenship", "Decline")
-        if "veteran" in label or "protected" in label:
+            
+        if "veteran" in label_lower or "protected" in label_lower:
             return self.user_data.get("veteran_status", "Decline")
-        if "disability" in label:
+            
+        if "disability" in label_lower:
             return self.user_data.get("disability_status", "Decline")
-        # default "Yes"
+            
+        # Default fallback
         return "Yes"
 
-    def _answer_text(self, input_el, answered_set, container, work_location):
+
+    def _answer_text(self, input_el, answered_set, container, work_location, job_description):
         """Answer a text input."""
         try:
             label_el = container.find_element(By.XPATH, ".//label[@for]")
@@ -496,7 +617,7 @@ class EasyApplyProcess:
         if "confidence" in label or "scale of 1-10" in label:
             return self.user_data.get("confidence_level", "8")
         if "hear" in label or "come across" in label:
-            return "https://github.com/GodsScion/Auto_job_applier_linkedIn"
+            return "LinkedIn"
         return None  # will be handled by router fallback
 
     def _answer_textarea(self, textarea_el, answered_set, container):
@@ -545,6 +666,63 @@ class EasyApplyProcess:
             label = "Unknown"
         answered_set.add((f"checkbox: {label}", str(checkbox_el.is_selected()), "checkbox", ""))
 
+    def _handle_follow_company(self, modal: WebElement):
+        """
+        Enable or disable LinkedIn's Follow Company checkbox
+        according to user settings.
+
+        user_data["follow_companies"]:
+        True  -> ensure checked
+        False -> ensure unchecked
+        """
+        desired_state = self.user_data.get("follow_companies", False)
+
+        try:
+            logger.debug(f"Desired follow state: {desired_state}")
+
+            # Find every checkbox on review page
+            checkboxes = modal.find_elements(By.XPATH, ".//input[@type='checkbox']")
+
+            for cb in checkboxes:
+                try:
+                    checkbox_id = cb.get_attribute("id")
+                    label_text = ""
+
+                    if checkbox_id:
+                        label = self._safe_find(modal, f'.//label[@for="{checkbox_id}"]')
+                        if label:
+                            label_text = label.text.lower()
+
+                    parent_text = ""
+                    try:
+                        parent_text = cb.find_element(By.XPATH, "./ancestor::div[1]").text.lower()
+                    except Exception:  # Fixed bare except
+                        pass
+
+                    combined = label_text + " " + parent_text
+
+                    # Detect LinkedIn follow wording
+                    follow_keywords = ["follow", "company updates", "stay updated", "keep up"]
+
+                    if any(word in combined for word in follow_keywords):
+                        current_state = cb.is_selected()
+                        logger.debug(f"Found follow checkbox (selected={current_state})")
+
+                        if current_state != desired_state:
+                            self.driver.execute_script("arguments[0].click();", cb)
+                            logger.info(f"Follow checkbox changed to {desired_state}")
+                        return
+
+                except Exception as cb_err:  # Isolates individual checkbox failures
+                    logger.debug(f"Skipping a checkbox due to error: {cb_err}")
+                    continue
+
+            logger.debug("No Follow checkbox found.")
+
+        except Exception as e:
+            logger.warning(f"Follow checkbox handling failed: {e}")
+
+
     def _try_click_review(self, modal) -> bool:
         """Look for 'Review' button and click it. Return True if found."""
         try:
@@ -582,15 +760,17 @@ class EasyApplyProcess:
         Also log success and write applied CSV.
         """
         modal = self._get_modal()  # modal still present
+        # Handle company follow preference
+        self._handle_follow_company(modal)
         # Follow company checkbox
-        if self.user_data.get("follow_companies", False):
-            try:
-                follow = modal.find_element(By.XPATH, ".//input[@id='follow-company-checkbox']")
-                if not follow.is_selected():
-                    follow.click()
-                    logger.debug("Follow company checkbox enabled.")
-            except:
-                pass
+        # if self.user_data.get("follow_companies", False):
+        #     try:
+        #         follow = modal.find_element(By.XPATH, ".//input[@id='follow-company-checkbox']")
+        #         if follow.is_selected():
+        #             follow.click()
+        #             logger.debug("Follow company checkbox disabled.")
+        #     except:
+        #         pass
 
         # Submit (if not already clicked)
         submitted = False
