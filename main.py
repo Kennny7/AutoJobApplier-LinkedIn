@@ -78,27 +78,6 @@ def run_wizard(config: Dict[str, Any]) -> Dict[str, Any]:
     user["summary"] = questionary.text("LinkedIn Summary:", default=user.get("summary", "")).ask()
     user["cover_letter"] = questionary.text("Default Cover Letter:", default=user.get("cover_letter", "")).ask()
 
-    # user["years_experience"] = questionary.text("Total Years of Experience:", default=user.get("years_experience", "5")).ask()
-    # user["recent_employer"] = questionary.text("Most Recent Employer:", default=user.get("recent_employer", "")).ask()
-    # user["desired_salary"] = questionary.text("Desired Salary (annual, numeric):", default=user.get("desired_salary", "100000")).ask()
-    # user["current_ctc"] = questionary.text("Current CTC (annual, numeric):", default=user.get("current_ctc", "80000")).ask()
-    # user["notice_period"] = questionary.text("Notice Period (days):", default=user.get("notice_period", "30")).ask()
-    # user["confidence_level"] = questionary.text("Confidence level (1-10):", default=user.get("confidence_level", "8")).ask()
-
-    # # 3. Behaviour
-    # state.settings = settings
-    # state.pause_on_unknown = questionary.confirm("Pause on unknown questions?").ask()
-    # unknown_actions = ["pause", "skip_job", "fill_placeholder", "fill_random"]
-    # state.unknown_action = questionary.select(
-    #     "If unknown question and not pausing:",
-    #     choices=unknown_actions
-    # ).ask()
-    # headless = questionary.confirm("Run browser headless?").ask()
-    # stealth = questionary.confirm("Use stealth mode (undetected chromedriver)?").ask()
-    # cycle = questionary.confirm("Cycle through sort/date filters after each run?").ask()
-    # max_apps = questionary.text("Max applications per session:", default="100").ask()
-
-
     # ---- Numeric / formatted fields (validated) ----
     # years_experience
     raw_exp = questionary.text(
@@ -143,15 +122,19 @@ def run_wizard(config: Dict[str, Any]) -> Dict[str, Any]:
     user["confidence_level"] = clean_confidence(raw_conf, default=8)
 
     # 3. Behaviour
-    # ... (rest unchanged)
     max_apps = questionary.text(
         "Max applications per session:",
         default=str(user.get("max_applications", 100)),
         validate=lambda text: bool(extract_number(text)) or "Enter a number"
     ).ask()
     max_apps_int = safe_int(max_apps, 100, "max_applications")
-    user_data["max_applications"] = max_apps_int
-    # ... (rest unchanged)
+    user["max_applications"] = max_apps_int
+
+    # Follow companies
+    user["follow_companies"] = questionary.confirm(
+        "Follow companies after applying?",
+        default=user.get("follow_companies", False)
+    ).ask()
 
     # Save all into user_data
     user_data = {**user}
@@ -161,6 +144,7 @@ def run_wizard(config: Dict[str, Any]) -> Dict[str, Any]:
     user_data["max_applications"] = int(max_apps)
     user_data["pause_on_unknown"] = state.pause_on_unknown
     user_data["unknown_action"] = state.unknown_action
+    user_data["follow_companies"] = state.follow_companies
 
     # Update state
     state.settings.update({
