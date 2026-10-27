@@ -1,7 +1,7 @@
 
 ```markdown
-<h1 align="center">AutoJobApplier-LinkedIn</h1>
-<h3 align="center">Job Applier & Email Outreach Assistant</h3>
+<h1 align="center">AutoJobApplier</h1>
+<h3 align="center">AI Job Applier & Email Outreach Assistant</h3>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10%2B-blue" />
@@ -12,6 +12,7 @@
   <img src="https://img.shields.io/badge/Outreach-SMTP-red" />
   <img src="https://img.shields.io/badge/Deploy-Docker-2496ED" />
 </p>
+```
 
 Automated job application, live web-based job discovery, resume tailoring, and direct email outreach — with intelligence, control, and extensibility.
 
