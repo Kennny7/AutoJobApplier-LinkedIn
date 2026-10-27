@@ -1,18 +1,17 @@
+<div align="center">
+  <h1>Auto Job Applier</h1>
+  <h3>AI Job Applier & Email Outreach Assistant</h3>
 
-```markdown
-<h1 align="center">AutoJobApplier</h1>
-<h3 align="center">AI Job Applier & Email Outreach Assistant</h3>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.10%2B-blue" />
-  <img src="https://img.shields.io/badge/License-MIT-green" />
-  <img src="https://img.shields.io/badge/Status-Active-success" />
-  <img src="https://img.shields.io/badge/Automation-Selenium-orange" />
-  <img src="https://img.shields.io/badge/CLI-Rich%20%2B%20Questionary-purple" />
-  <img src="https://img.shields.io/badge/Outreach-SMTP-red" />
-  <img src="https://img.shields.io/badge/Deploy-Docker-2496ED" />
-</p>
-```
+  <p>
+    <img src="https://img.shields.io/badge/Python-3.10%2B-blue" alt="Python Version" />
+    <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
+    <img src="https://img.shields.io/badge/Status-Active-success" alt="Project Status" />
+    <img src="https://img.shields.io/badge/Automation-Selenium-orange" alt="Automation" />
+    <img src="https://shields.io" alt="CLI Interface" />
+    <img src="https://img.shields.io/badge/Outreach-SMTP-red" alt="Outreach Method" />
+    <img src="https://img.shields.io/badge/Deploy-Docker-2496ED" alt="Deployment" />
+  </p>
+</div>
 
 Automated job application, live web-based job discovery, resume tailoring, and direct email outreach — with intelligence, control, and extensibility.
 
