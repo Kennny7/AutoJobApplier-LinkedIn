@@ -1,18 +1,48 @@
 # Python
 __pycache__/
 *.py[cod]
+*.class
 *.so
-
-# Virtual environment
+.Python
+env/
 venv/
 .venv/
-env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Project specific
-data/logs/
-data/applied_jobs.csv
-data/failed_jobs.csv
-data/logs/screenshots/
-config/user_data.yaml
-resume/
-*.pyc
+# Secrets & Local Environment
+.env
+*.local.yaml
+*.local.yml
+data/profile_dir/profile.json
+data/profile_dir/secrets.env
+
+# Logs and outputs
+logs/
+*.log
+output/
+applied_jobs.csv
+failed_jobs.csv
+job_applications.jsonl
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
