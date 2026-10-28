@@ -30,7 +30,7 @@ wheels/
 *.local.yml
 data/profile_dir/profile.json
 data/profile_dir/secrets.env
-data/profile_dir/resume_template.txt
+data/profile_dir/resume_template.tex
 data/profile_dir/online_profiles.md
 
 # Logs and outputs
